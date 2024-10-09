@@ -1,18 +1,27 @@
-import type { DatePickerProps, FormProps } from "antd";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { FormProps } from "antd";
 import { Button, DatePicker, Form, Input, Modal, Select } from "antd";
 import { TUser } from "../../types";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
+interface UserCreateProps {
+  setIsNewUser: (value: boolean) => void; // Function to toggle the new user state
+  isNewUser?: boolean; // Flag indicating if it's a new user
+  editingUser?: TUser; // Optional user data for editing
+  isModalVisible?: boolean; // Flag for controlling modal visibility
+  setIsModalVisible?: (value: boolean) => void; // Function to set modal visibility
+  setIsModalOpen: (value: boolean) => void; // Function to set modal open state
+  isModalOpen?: boolean; // Flag for modal open state
+}
+
 const UserCreate = ({
   setIsNewUser,
   isNewUser,
   editingUser,
-  isModalVisible,
-  setIsModalVisible,
   setIsModalOpen,
   isModalOpen,
-}) => {
+}: UserCreateProps) => {
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -28,15 +37,16 @@ const UserCreate = ({
     const userId = editingUser?.id || Date.now().toString(); // Generate a new ID if creating a new user
 
     const userData = {
-      id: userId,
-      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format() : null, // Use Day.js directly
+      // Use Day.js directly
       ...values,
     };
 
     const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
 
     // Check if we are updating an existing user
-    const userIndex = existingUsers.findIndex((user) => user.id === userId);
+    const userIndex = existingUsers.findIndex(
+      (user: any) => user.id === userId
+    );
     if (userIndex !== -1) {
       // Update existing user
       existingUsers[userIndex] = userData;

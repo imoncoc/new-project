@@ -206,7 +206,7 @@ const AllUser = () => {
         <UserCreate
           setIsNewUser={setIsNewUser}
           isNewUser={isNewUser}
-          editingUser={editingUser}
+          editingUser={editingUser!}
           isModalVisible={isModalVisible} // Pass this to UserCreate
           setIsModalVisible={setIsModalVisible}
           setIsModalOpen={setIsModalOpen}

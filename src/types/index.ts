@@ -2,7 +2,7 @@ export interface TUser {
   id: string;
   firstName: string;
   lastName: string;
-  dateOfBirth: date;
+  dateOfBirth: Date;
   city?: string;
   gender: "Male" | "Female";
   phone: string;
