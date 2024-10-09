@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { DatePickerProps, FormProps } from "antd";
 import { Button, DatePicker, Form, Input, Modal, Select } from "antd";
-import { useState } from "react";
 import { TUser } from "../../types";
 import { toast } from "sonner";
+import dayjs from "dayjs";
 
 const UserCreate = ({
   setIsNewUser,
@@ -14,8 +13,6 @@ const UserCreate = ({
   setIsModalOpen,
   isModalOpen,
 }) => {
-  console.log({ editingUser });
-
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -27,19 +24,31 @@ const UserCreate = ({
   const onFinish: FormProps<TUser>["onFinish"] = (values) => {
     console.log("Success:", values);
 
-    const uniqueId = Date.now().toString();
+    // Use the existing ID if editing an existing user
+    const userId = editingUser?.id || Date.now().toString(); // Generate a new ID if creating a new user
 
     const userData = {
-      id: uniqueId,
+      id: userId,
+      dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format() : null, // Use Day.js directly
       ...values,
     };
 
     const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    existingUsers.push(userData);
-    localStorage.setItem("users", JSON.stringify(existingUsers));
 
+    // Check if we are updating an existing user
+    const userIndex = existingUsers.findIndex((user) => user.id === userId);
+    if (userIndex !== -1) {
+      // Update existing user
+      existingUsers[userIndex] = userData;
+      toast.success("Successfully updated user");
+    } else {
+      // Create new user
+      existingUsers.push(userData);
+      toast.success("Successfully created user");
+    }
+
+    localStorage.setItem("users", JSON.stringify(existingUsers));
     console.log("User data stored:", userData);
-    toast.success("Successfully created user");
     setIsNewUser(!isNewUser);
     handleCancel(); // Close the modal after successful submission
   };
@@ -49,21 +58,27 @@ const UserCreate = ({
     toast.error("Please fill all input.");
   };
 
-  const onChange: DatePickerProps["onChange"] = (date, dateString) => {
-    console.log(date, dateString);
-  };
-
   const validateDateOfBirth = (_: any, value: any) => {
-    const today = new Date();
-    const hundredYearsAgo = new Date(
-      today.setFullYear(today.getFullYear() - 100)
-    );
-
     if (!value) {
       return Promise.reject(new Error("Please select your date of birth!"));
     }
 
-    if (value.isBefore(hundredYearsAgo)) {
+    const date4 = dayjs(value); // Ensure we're using Day.js
+
+    if (!date4.isValid()) {
+      return Promise.reject(new Error("Invalid date selected!"));
+    }
+
+    const today = dayjs();
+    const hundredYearsAgo = today.subtract(100, "year");
+
+    if (date4.isAfter(today)) {
+      return Promise.reject(
+        new Error("Date of birth cannot be in the future!")
+      );
+    }
+
+    if (date4.isBefore(hundredYearsAgo)) {
       return Promise.reject(
         new Error("Date of birth cannot be more than 100 years ago!")
       );
@@ -94,13 +109,13 @@ const UserCreate = ({
             style={{ maxWidth: 600 }}
             initialValues={{
               remember: true,
+              // Convert to Day.js object
               ...editingUser,
             }}
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
             autoComplete='off'
             layout='vertical'
-            defaultValue={editingUser}
           >
             <Form.Item<TUser>
               label='First Name'
@@ -119,15 +134,13 @@ const UserCreate = ({
             >
               <Input />
             </Form.Item>
+
             <Form.Item<TUser>
               label='Last Name'
               name='lastName'
               rules={[
                 { required: true, message: "Please input your last name!" },
-                {
-                  min: 2,
-                  message: "Last name must be at least 2 characters!",
-                },
+                { min: 2, message: "Last name must be at least 2 characters!" },
                 {
                   max: 50,
                   message: "Last name cannot be longer than 50 characters!",
@@ -159,7 +172,10 @@ const UserCreate = ({
               name='dateOfBirth'
               rules={[{ validator: validateDateOfBirth }]}
             >
-              <DatePicker style={{ width: "100%" }} onChange={onChange} />
+              <DatePicker
+                style={{ width: "100%" }}
+                format='YYYY-MM-DD' // Optional: specify a date format
+              />
             </Form.Item>
 
             <Form.Item<TUser>
@@ -175,14 +191,12 @@ const UserCreate = ({
             >
               <Input />
             </Form.Item>
+
             <Form.Item<TUser>
               label='City'
               name='city'
               rules={[
-                {
-                  min: 2,
-                  message: "City must be at least 2 characters!",
-                },
+                { min: 2, message: "City must be at least 2 characters!" },
                 {
                   max: 50,
                   message: "City cannot be longer than 50 characters!",
@@ -191,6 +205,7 @@ const UserCreate = ({
             >
               <Input />
             </Form.Item>
+
             <Form.Item<TUser>
               label='Email'
               name='email'
