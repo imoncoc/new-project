@@ -213,12 +213,20 @@ const AllUser = () => {
           isModalOpen={isModalOpen}
         />
       </div>
-      <Table<TUser>
-        columns={columns}
-        dataSource={data}
-        onChange={onChange}
-        showSorterTooltip={{ target: "sorter-icon" }}
-      />
+      {data?.length === 0 && (
+        <p className='text-center text-2xl'>
+          {" "}
+          No data found. Please add first.
+        </p>
+      )}
+      {data?.length >= 1 && (
+        <Table<TUser>
+          columns={columns}
+          dataSource={data}
+          onChange={onChange}
+          showSorterTooltip={{ target: "sorter-icon" }}
+        />
+      )}
     </div>
   );
 };
